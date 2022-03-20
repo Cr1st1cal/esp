@@ -110,19 +110,24 @@ function module:AddEsp(Player)
                 Retainer.boxobject.Size = BoxSize
                 Retainer.boxobject.Position = BoxPosition
                 else
+                    for i,v in pairs(Retainer) do
+                        v.Visible = false
+                    end
+                end
+            else
                 for i,v in pairs(Retainer) do
                     v.Visible = false
                 end
             end
-            else
-            for i,v in pairs(Retainer) do
-                v.Visible = false
-            end
-        end
-        task.wait(math.clamp(5))
-    end)
-    self.cache[Player] = Retainer
-end
+    
+            task.wait(math.clamp(self.settings.refreshrate / 1000, 0, 9e9))
+    
+            CanRun = true
+        end)
+    
+        self.cache[Player] = Retainer
+    end
+    
 
 function module:RemoveEsp(Player)
     local Data = self.cache[Player]
