@@ -1,0 +1,178 @@
+local module = {
+    drawingcache = {},
+    cache = {},
+    settings = {
+        enabled = true,
+        refreshrate = 5,
+        boxes = true,
+        limitdistance = false,
+        maxdistance = 2500,
+        teamcheck = false,
+    }
+}
+
+local Math = loadstring(game:HttpGet("https://ducksite.xyz/ceri/irays_math.lua"))()
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- Cache
+local LocalPlayer = Players.LocalPlayer
+local CurrentCamera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+function module:Create(Class, Properties)
+    local Object = Drawing.new(Class)
+
+    for i,v in pairs(Properties) do
+        Object[i] = v
+    end
+
+    table.insert(self.drawingcache, Object)
+    return Object
+end
+
+function module:ParseColor(Color, Player)
+    local TeamColor = self:GetTeamColor(Player) or Color
+    return self.settings.teamcolor and TeamColor or Color
+end
+
+
+function module:AddEsp(Player)
+    if (Player == LocalPlayer) then
+        return
+    end
+    
+    local Container = {}
+    
+    Container.boxobject = self:Create("Square", {
+        Visible = false,
+        Transparency = 1,
+        Color = Color3.new(1, 1, 1),
+        Thickness = 1,
+        Filled = false,
+    })
+    
+
+    local CanRun = true
+
+    RunService:BindToRenderStep(Player.Name .. "Esp", 1, function()
+        if (not CanRun) then
+            return
+        end
+
+        CanRun = false
+
+        local Character, Root = self:GetCharacter(Player)
+
+        if (Character and Root) then
+            local Health, MaxHealth = self:GetHealth(Player)
+            local _, OnScreen = CurrentCamera:WorldToViewportPoint(Root.Position)
+            local Magnitude = (Root.Position - CurrentCamera.CFrame.p).Magnitude
+            local CanShow = OnScreen and self.settings.enabled
+
+            if (self.settings.limitdistance and Magnitude > self.settings.maxdistance) then
+                CanShow = false
+            end
+
+            if (self.settings.teamcheck and not self:CheckTeam(Player)) then
+                CanShow = false
+            end
+
+            if (Health <= 0) then
+                CanShow = false
+            end
+
+            
+            if (CanShow) then
+                local Data = self:GetBoundingBox(Character)
+                local Width, Height = math.floor(Data.Positions.TopLeft.X - Data.Positions.TopRight.X), math.floor(Data.Positions.TopLeft.Y - Data.Positions.BottomLeft.Y)
+                local BoxSize = Vector2.new(Width, Height)
+                local BoxPosition = Vector2.new(math.floor(Data.Positions.BottomRight.X), math.floor(Data.Positions.BottomRight.Y))
+                local ViewportSize = CurrentCamera.ViewportSize
+                
+                Container.boxobject.Visible = self.settings.boxes
+                Container.boxobject.Size = BoxSize
+                Container.boxobject.Position = BoxPosition
+                else
+                for i,v in pairs(Container) do
+                    v.Visible = false
+                end
+            end
+            else
+            for i,v in pairs(Container) do
+                v.Visible = false
+            end
+        end
+        task.wait(math.clamp(self.settings.refreshrate / 1000, 0, 9e9))
+    end)
+    self.cache[Player] = Container
+end
+
+function module:RemoveEsp(Player)
+    local Data = self.cache[Player]
+
+    if (Data) then
+        RunService:UnbindFromRenderStep(Player.Name .. "Esp")
+
+        for _, Object in pairs(Data) do
+            Object:Remove()
+        end
+    end
+end
+
+function module:GetCharacter(Player)
+    return Player.Character, Player.Character and Player.Character:WaitForChild("HumanoidRootPart")
+end
+
+function module:GetBoundingBox(Character)
+    local Data = {}
+
+    for i,v in pairs(Character:GetChildren()) do
+        if (v:IsA("BasePart") and v.Name ~= "HumanoidRootPart") then
+            for i2, v2 in pairs(Math.getpartinfo2(v.CFrame, v.Size)) do
+                table.insert(Data, v2)
+            end
+        end
+    end
+
+    return Math.getposlist2(Data)
+end
+
+function module:GetHealth(Player)
+    local Character = self:GetCharacter(Player)
+    local Humanoid = Character and Character:WaitForChild("Humanoid")
+
+    return Humanoid and Humanoid.Health, Humanoid and Humanoid.MaxHealth
+end
+
+function module:GetTeam(Player)
+    return Player.Team
+end
+
+function module:GetTeamColor(Player)
+    local Team = self:GetTeam(Player)
+    return Team and Team.TeamColor.Color
+end
+
+function module:CheckTeam(Player)
+    return Player.Team ~= LocalPlayer.Team
+end
+
+function module:Init()
+    for i,v in pairs(Players:GetPlayers()) do
+        self:AddEsp(v)
+    end
+
+    Players.PlayerAdded:Connect(function(Player)
+        self:AddEsp(Player)
+    end)
+
+    Players.PlayerRemoving:Connect(function(Player)
+        self:AddEsp(Player)
+    end)
+end
+
+return module
+
