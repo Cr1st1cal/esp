@@ -106,16 +106,16 @@ function module:AddEsp(Player)
                 local BoxSize = Vector2.new(Width, Height)
                 local BoxPosition = Vector2.new(math.floor(Data.Positions.BottomRight.X), math.floor(Data.Positions.BottomRight.Y))
                 
-                Container.boxobject.Visible = self.settings.boxes
-                Container.boxobject.Size = BoxSize
-                Container.boxobject.Position = BoxPosition
+                Retainer.boxobject.Visible = self.settings.boxes
+                Retainer.boxobject.Size = BoxSize
+                Retainer.boxobject.Position = BoxPosition
                 else
-                for i,v in pairs(Container) do
+                for i,v in pairs(Retainer) do
                     v.Visible = false
                 end
             end
             else
-            for i,v in pairs(Container) do
+            for i,v in pairs(Retainer) do
                 v.Visible = false
             end
         end
