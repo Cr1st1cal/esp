@@ -4,14 +4,38 @@ local module = {
     settings = {
         enabled = true,
         refreshrate = 5,
-        boxes = true,
-        limitdistance = false,
+        limitdistance = true,
         maxdistance = 2500,
         teamcheck = false,
+        teamcolor = true,
+        textoffset = 0,
+        textfont = 0,
+        textsize = 18,
+        names = true,
+        namesoutline = false,
+        namescolor = Color3.new(1, 1, 1),
+        distance = true,
+        distanceoutline = false,
+        distancecolor = Color3.new(1, 1, 1),
+        boxes = true,
+        boxesoutline = false,
+        boxesfill = false,
+        boxesfillcolor = Color3.new(1, 1, 1),
+        boxesfilltrans = 0.5,
+        boxescolor = Color3.new(1, 1, 1),
+        tracers = false,
+        tracerscolor = Color3.new(1, 1, 1),
+        tracersorigin = "Bottom",
+        healthbars = false,
+        healthbarsoffset = 2,
+        healthbarsoutline = false,
+        healthbarscolor = Color3.new(0, 1, 0),
+        
+        aimtarget_on = false,
+        aimtarget = nil,
+        aimtarget_color = Color3.new(252, 186, 3),
     }
 }
-
-local Math = loadstring(game:HttpGet("https://ducksite.xyz/ceri/irays_math.lua"))()
 
 -- Services
 local Players = game:GetService("Players")
@@ -33,12 +57,6 @@ function module:Create(Class, Properties)
     return Object
 end
 
-function module:ParseColor(Color, Player)
-    local TeamColor = self:GetTeamColor(Player) or Color
-    return self.settings.teamcolor and TeamColor or Color
-end
-
-
 function module:AddEsp(Player)
     if (Player == LocalPlayer) then
         return
@@ -53,44 +71,23 @@ function module:AddEsp(Player)
         Thickness = 1,
         Filled = false,
     })
-    
-
-    local CanRun = true
-
     RunService:BindToRenderStep(Player.Name .. "Esp", 1, function()
-        if (not CanRun) then
-            return
-        end
-
-        CanRun = false
-
         local Character, Root = self:GetCharacter(Player)
-
+    
         if (Character and Root) then
             local Health, MaxHealth = self:GetHealth(Player)
             local _, OnScreen = CurrentCamera:WorldToViewportPoint(Root.Position)
             local Magnitude = (Root.Position - CurrentCamera.CFrame.p).Magnitude
             local CanShow = OnScreen and self.settings.enabled
-
-            if (self.settings.limitdistance and Magnitude > self.settings.maxdistance) then
-                CanShow = false
-            end
-
-            if (self.settings.teamcheck and not self:CheckTeam(Player)) then
-                CanShow = false
-            end
-
             if (Health <= 0) then
                 CanShow = false
             end
-
             
             if (CanShow) then
                 local Data = self:GetBoundingBox(Character)
                 local Width, Height = math.floor(Data.Positions.TopLeft.X - Data.Positions.TopRight.X), math.floor(Data.Positions.TopLeft.Y - Data.Positions.BottomLeft.Y)
                 local BoxSize = Vector2.new(Width, Height)
                 local BoxPosition = Vector2.new(math.floor(Data.Positions.BottomRight.X), math.floor(Data.Positions.BottomRight.Y))
-                local ViewportSize = CurrentCamera.ViewportSize
                 
                 Container.boxobject.Visible = self.settings.boxes
                 Container.boxobject.Size = BoxSize
@@ -105,9 +102,9 @@ function module:AddEsp(Player)
                 v.Visible = false
             end
         end
-        task.wait(math.clamp(self.settings.refreshrate / 1000, 0, 9e9))
+        task.wait(math.clamp(5))
     end)
-    self.cache[Player] = Container
+    self.cache[Player] = Retainer
 end
 
 function module:RemoveEsp(Player)
@@ -139,7 +136,6 @@ function module:GetBoundingBox(Character)
 
     return Math.getposlist2(Data)
 end
-
 function module:GetHealth(Player)
     local Character = self:GetCharacter(Player)
     local Humanoid = Character and Character:WaitForChild("Humanoid")
@@ -149,11 +145,6 @@ end
 
 function module:GetTeam(Player)
     return Player.Team
-end
-
-function module:GetTeamColor(Player)
-    local Team = self:GetTeam(Player)
-    return Team and Team.TeamColor.Color
 end
 
 function module:CheckTeam(Player)
@@ -173,6 +164,5 @@ function module:Init()
         self:AddEsp(Player)
     end)
 end
-
 return module
 
