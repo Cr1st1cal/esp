@@ -33,12 +33,6 @@ function module:Create(Class, Properties)
     return Object
 end
 
-function module:ParseColor(Color, Player)
-    local TeamColor = self:GetTeamColor(Player) or Color
-    return self.settings.teamcolor and TeamColor or Color
-end
-
-
 function module:AddEsp(Player)
     if (Player == LocalPlayer) then
         return
@@ -54,7 +48,6 @@ function module:AddEsp(Player)
         Filled = false,
     })
     
-
     local CanRun = true
 
     RunService:BindToRenderStep(Player.Name .. "Esp", 1, function()
@@ -65,13 +58,13 @@ function module:AddEsp(Player)
         CanRun = false
 
         local Character, Root = self:GetCharacter(Player)
-
+    
         if (Character and Root) then
             local Health, MaxHealth = self:GetHealth(Player)
             local _, OnScreen = CurrentCamera:WorldToViewportPoint(Root.Position)
             local Magnitude = (Root.Position - CurrentCamera.CFrame.p).Magnitude
             local CanShow = OnScreen and self.settings.enabled
-
+            
             if (self.settings.limitdistance and Magnitude > self.settings.maxdistance) then
                 CanShow = false
             end
@@ -79,11 +72,10 @@ function module:AddEsp(Player)
             if (self.settings.teamcheck and not self:CheckTeam(Player)) then
                 CanShow = false
             end
-
+            
             if (Health <= 0) then
                 CanShow = false
             end
-
             
             if (CanShow) then
                 local Data = self:GetBoundingBox(Character)
@@ -139,7 +131,6 @@ function module:GetBoundingBox(Character)
 
     return Math.getposlist2(Data)
 end
-
 function module:GetHealth(Player)
     local Character = self:GetCharacter(Player)
     local Humanoid = Character and Character:WaitForChild("Humanoid")
@@ -149,11 +140,6 @@ end
 
 function module:GetTeam(Player)
     return Player.Team
-end
-
-function module:GetTeamColor(Player)
-    local Team = self:GetTeam(Player)
-    return Team and Team.TeamColor.Color
 end
 
 function module:CheckTeam(Player)
@@ -173,6 +159,6 @@ function module:Init()
         self:AddEsp(Player)
     end)
 end
-
+print("working")
 return module
 
