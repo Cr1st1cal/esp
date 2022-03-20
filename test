@@ -62,27 +62,44 @@ function module:AddEsp(Player)
         return
     end
     
-    local Container = {}
+    local Retainer = {}
     
-    Container.boxobject = self:Create("Square", {
+    Retainer.boxobject = self:Create("Square", {
         Visible = false,
         Transparency = 1,
         Color = Color3.new(1, 1, 1),
         Thickness = 1,
         Filled = false,
     })
+    local CanRun = true
+
     RunService:BindToRenderStep(Player.Name .. "Esp", 1, function()
+        if (not CanRun) then
+            return
+        end
+
+        CanRun = false
+
         local Character, Root = self:GetCharacter(Player)
-    
+
         if (Character and Root) then
             local Health, MaxHealth = self:GetHealth(Player)
             local _, OnScreen = CurrentCamera:WorldToViewportPoint(Root.Position)
             local Magnitude = (Root.Position - CurrentCamera.CFrame.p).Magnitude
             local CanShow = OnScreen and self.settings.enabled
+
+            if (self.settings.limitdistance and Magnitude > self.settings.maxdistance) then
+                CanShow = false
+            end
+
+            if (self.settings.teamcheck and not self:CheckTeam(Player)) then
+                CanShow = false
+            end
+
             if (Health <= 0) then
                 CanShow = false
             end
-            
+
             if (CanShow) then
                 local Data = self:GetBoundingBox(Character)
                 local Width, Height = math.floor(Data.Positions.TopLeft.X - Data.Positions.TopRight.X), math.floor(Data.Positions.TopLeft.Y - Data.Positions.BottomLeft.Y)
